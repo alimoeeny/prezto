@@ -32,6 +32,12 @@
 # Load dependencies.
 pmodload 'helper'
 
+# ALI: timing the commands
+function ts_preexec() {
+  timer=${timer:-$SECONDS}
+}
+add-zsh-hook preexec ts_preexec
+
 function prompt_sorin_async_callback {
   case $1 in
     prompt_sorin_async_git)
@@ -84,6 +90,12 @@ function prompt_sorin_async_tasks {
 function prompt_sorin_precmd {
   setopt LOCAL_OPTIONS
   unsetopt XTRACE KSH_ARRAYS
+
+  if [ $timer ]; then
+    timer_show=$(($SECONDS - $timer))
+    _prompt_ali_timer=" %* %F{cyan}${timer_show}s %{$reset_color%}"
+    unset timer
+  fi
 
   # Format PWD.
   _prompt_sorin_pwd=$(prompt-pwd)
@@ -158,12 +170,14 @@ function prompt_sorin_setup {
 
   _prompt_sorin_git=''
   _prompt_sorin_pwd=''
+  _prompt_ali_timer=''
 
   # Define prompts.
   PROMPT='${SSH_TTY:+"%F{9}%n%f%F{7}@%f%F{3}%m%f "}%F{4}${_prompt_sorin_pwd}%(!. %B%F{1}#%f%b.)${editor_info[keymap]} '
   RPROMPT='$python_info[virtualenv]${editor_info[overwrite]}%(?:: %F{1}'
   RPROMPT+=${show_return}
   RPROMPT+='%f)${VIM:+" %B%F{6}V%f%b"}${_prompt_sorin_git}'
+  RPROMPT+='${_prompt_ali_timer}'
   SPROMPT='zsh: correct %F{1}%R%f to %F{2}%r%f [nyae]? '
 }
 
